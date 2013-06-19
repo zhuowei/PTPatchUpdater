@@ -2,6 +2,8 @@ package net.zhuoweizhang.ptpatchupdater;
 
 import java.io.*;
 
+import java.awt.*;
+
 import java.nio.charset.Charset;
 
 import nl.lxtreme.binutils.elf.*;
@@ -35,6 +37,10 @@ public class PTPatchUpdater {
 	 */
 	public static void main(String[] args) {
 		try {
+			if (args.length == 0) {
+				runGui();
+				return;
+			}
 			File ptpatch = new File(args[0]);
 			File origLib = new File(args[1]);
 			File newLib = new File(args[2]);
@@ -49,11 +55,40 @@ public class PTPatchUpdater {
 
 	}
 	
+	public static void runGui() throws Exception {
+		Frame frame = new Frame("PTPatchUpdater");
+		frame.setVisible(true);
+		FileDialog oldLibDialog = new FileDialog(frame, "Select old libminecraftpe.so");
+		oldLibDialog.setVisible(true);
+		File origLib = new File(oldLibDialog.getDirectory(), oldLibDialog.getFile());
+		FileDialog newLibDialog = new FileDialog(frame, "Select new libminecraftpe.so");
+		newLibDialog.setVisible(true);
+		File newLib = new File(oldLibDialog.getDirectory(), newLibDialog.getFile());
+		PTPatchUpdater main = new PTPatchUpdater(origLib, newLib);
+		main.loadSymbols();
+		for (;;) {
+			FileDialog oldPatchDialog = new FileDialog(frame, "Select old patch");
+			oldPatchDialog.setVisible(true);
+			String oldPath = oldPatchDialog.getFile();
+			if (oldPath == null) break;
+			File oldPatch = new File(oldPatchDialog.getDirectory(), oldPath);
+			FileDialog newPatchDialog = new FileDialog(frame, "Save new patch", FileDialog.SAVE);
+			newPatchDialog.setVisible(true);
+			String newPath = newPatchDialog.getFile();
+			if (newPath == null) break;
+			File newPatch = new File(newPatchDialog.getDirectory(), newPath);
+			main.updatePatch(oldPatch, newPatch);
+		}
+		frame.setVisible(false);
+		System.exit(0);
+		
+	}
+	
 	public void updatePatch(File ptpatch, File newPatch) throws IOException {
 		PTPatch patch = new PTPatch(ptpatch.getAbsolutePath());
 		patch.loadPatch();
 		byte[][] newPatchData = new byte[patch.getNumPatches()][];
-		for(int count = 0; count < patch.getNumPatches(); count++){
+		for(patch.count = 0; patch.count < patch.getNumPatches(); patch.count++){
 			int addr = patch.getNextAddr();
 			byte[] data = patch.getNextData();
 			System.out.println(addr);
@@ -68,9 +103,9 @@ public class PTPatchUpdater {
 			}
 			int newAddr = getNewAddr(modifiedSym, addr, data);
 			System.out.println(newAddr);
-			newPatchData[count] = createPTPatchSegment(newAddr, data);
+			newPatchData[patch.count] = createPTPatchSegment(newAddr, data);
 		}
-		writePTPatch(newPatch, newPatchData, "Made by 500ISE".getBytes(Charset.forName("UTF-8")));
+		writePTPatch(newPatch, newPatchData, patch.getMetaData());
 	}
 	
 	public int getNewAddr(Symbol modifiedSym, int addr, byte[] data) {
