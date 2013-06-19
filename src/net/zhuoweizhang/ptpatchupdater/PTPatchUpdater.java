@@ -63,7 +63,7 @@ public class PTPatchUpdater {
 		File origLib = new File(oldLibDialog.getDirectory(), oldLibDialog.getFile());
 		FileDialog newLibDialog = new FileDialog(frame, "Select new libminecraftpe.so");
 		newLibDialog.setVisible(true);
-		File newLib = new File(oldLibDialog.getDirectory(), newLibDialog.getFile());
+		File newLib = new File(newLibDialog.getDirectory(), newLibDialog.getFile());
 		PTPatchUpdater main = new PTPatchUpdater(origLib, newLib);
 		main.loadSymbols();
 		for (;;) {
